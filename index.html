@@ -1,140 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Lyft Driver Profit and Loss Calculator to evaluate driving metrics.">
-  <title>Lyft Driver P&L Calculator</title>
-  <link rel="icon" href="favicon.ico">
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-100 text-gray-900 font-sans">
-  <div class="max-w-3xl mx-auto p-6">
-    <h1 class="text-3xl font-bold text-center mb-6">Lyft Driver Profit &amp; Loss Calculator</h1>
-    <form id="pnlForm" onsubmit="event.preventDefault(); calculatePnL();" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-      <div class="grid grid-cols-1 gap-4">
-        <div>
-          <label for="rides" class="block">Total Rides:</label>
-          <input type="number" id="rides" required class="input-field">
-        </div>
-        <div>
-          <label for="miles" class="block">Total Online Miles:</label>
-          <input type="number" step="0.01" id="miles" required class="input-field">
-        </div>
-        <div>
-          <label for="ridePayments" class="block">Ride Payments ($):</label>
-          <input type="number" step="0.01" id="ridePayments" required class="input-field">
-        </div>
-        <div>
-          <label for="nonRideEarnings" class="block">Non-Ride Earnings ($):</label>
-          <input type="number" step="0.01" id="nonRideEarnings" required class="input-field">
-        </div>
-        <div>
-          <label for="platformFees" class="block">Lyft Platform Fees ($):</label>
-          <input type="number" step="0.01" id="platformFees" required class="input-field">
-        </div>
-        <div>
-          <label for="serviceFees" class="block">Service Fees ($):</label>
-          <input type="number" step="0.01" id="serviceFees" required class="input-field">
-        </div>
-        <div>
-          <label for="thirdPartyFees" class="block">Third-Party Fees ($):</label>
-          <input type="number" step="0.01" id="thirdPartyFees" required class="input-field">
-        </div>
-        <div>
-          <label for="tolls" class="block">Tolls Paid to You ($):</label>
-          <input type="number" step="0.01" id="tolls" required class="input-field">
-        </div>
-        <div>
-          <label for="irsRate" class="block">IRS Mileage Rate ($/mile):</label>
-          <input type="number" step="0.01" id="irsRate" value="0.67" required class="input-field">
-        </div>
-      </div>
-      <div class="mt-4 text-center">
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-          Calculate
-        </button>
-      </div>
-    </form>
-    <div id="results" aria-live="polite"></div>
-
-    <div class="mt-10 p-6 bg-white shadow-md rounded">
-      <h3 class="text-xl font-semibold mb-3">2024 Lyft Financial Reference</h3>
-      <p class="text-gray-600 mb-2">These figures represent Lyft's official company-wide financials. Use them to benchmark your driving metrics against platform performance.</p>
-      <ul class="list-disc pl-5 text-gray-700">
-        <li>Gross Bookings: $16.1 billion</li>
-        <li>Revenue: $5.8 billion</li>
-        <li>Cost of Revenue: $3.34 billion</li>
-        <li>Net Income: $22.8 million</li>
-        <li>Free Cash Flow: $766 million</li>
-        <li>Adjusted EBITDA: $382 million</li>
-        <li>Rides: 828 million</li>
-        <li>Active Riders: 44 million</li>
-      </ul>
-    </div>
-  </div>
-  
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lyft Driver Earnings Calculator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .card {
+      @apply bg-white rounded-lg shadow p-4 mt-6;
+    }
+  </style>
   <script>
-    function calculatePnL() {
-      const rides = parseInt(document.getElementById('rides').value) || 0;
-      const miles = parseFloat(document.getElementById('miles').value) || 0;
-      const ridePayments = parseFloat(document.getElementById('ridePayments').value) || 0;
-      const nonRideEarnings = parseFloat(document.getElementById('nonRideEarnings').value) || 0;
-      const platformFees = parseFloat(document.getElementById('platformFees').value) || 0;
-      const serviceFees = parseFloat(document.getElementById('serviceFees').value) || 0;
-      const thirdPartyFees = parseFloat(document.getElementById('thirdPartyFees').value) || 0;
-      const tolls = parseFloat(document.getElementById('tolls').value) || 0;
-      const irsRate = parseFloat(document.getElementById('irsRate').value) || 0;
-      
-      // Calculate earnings and fees
-      const grossEarnings = ridePayments + nonRideEarnings;
-      const totalFees = platformFees + serviceFees + thirdPartyFees;
-      const netEarnings = grossEarnings - totalFees;
-      const deductibleCost = miles * irsRate;
-      const netAfterMileage = netEarnings - deductibleCost;
-      
-      // Check for division by zero
-      const avgPerRideGross = rides ? grossEarnings / rides : 0;
-      const avgPerRideNet = rides ? netEarnings / rides : 0;
-      const avgPerMileNet = miles ? netEarnings / miles : 0;
-      const avgPerRideLyftTake = rides ? totalFees / rides : 0;
-      
-      const lyftCutRatio = grossEarnings ? totalFees / grossEarnings : 0;
-      const driverCutRatio = grossEarnings ? netEarnings / grossEarnings : 0;
-      const revenueToEarningsRatio = totalFees ? netEarnings / totalFees : 0;
-      const tollShare = grossEarnings ? tolls / grossEarnings : 0;
-      
-      const netColor = netAfterMileage >= 0 ? 'text-green-600' : 'text-red-600';
-      
-      document.getElementById('results').innerHTML = `
-        <div class="bg-white shadow-md rounded p-6 mt-6">
-          <h3 class="text-2xl font-semibold mb-4">Driver Profit &amp; Loss Report</h3>
-          <h4 class="text-lg font-semibold mt-4">Summary Totals</h4>
-          <ul class="space-y-2 text-gray-700">
-            <li><strong>Gross Earnings:</strong> $${grossEarnings.toFixed(2)}</li>
-            <li><strong>Non-Ride Earnings:</strong> $${nonRideEarnings.toFixed(2)}</li>
-            <li><strong>Total Fees (Lyft + 3rd parties):</strong> $${totalFees.toFixed(2)}</li>
-            <li><strong>Net Earnings (before mileage deduction):</strong> $${netEarnings.toFixed(2)}</li>
-            <li><strong>IRS Mileage Deduction (@ $${irsRate}/mile):</strong> $${deductibleCost.toFixed(2)}</li>
-            <li><strong>Net Earnings (after mileage deduction):</strong> <span class="${netColor}">$${netAfterMileage.toFixed(2)}</span></li>
-          </ul>
-          <h4 class="text-lg font-semibold mt-4">Per-Ride Metrics</h4>
-          <ul class="space-y-2 text-gray-700">
-            <li><strong>Average Gross per Ride:</strong> $${avgPerRideGross.toFixed(2)}</li>
-            <li><strong>Average Net per Ride:</strong> $${avgPerRideNet.toFixed(2)}</li>
-            <li><strong>Lyft Take per Ride:</strong> $${avgPerRideLyftTake.toFixed(2)}</li>
-          </ul>
-          <h4 class="text-lg font-semibold mt-4">Efficiency Metrics</h4>
-          <ul class="space-y-2 text-gray-700">
-            <li><strong>Net per Mile:</strong> $${avgPerMileNet.toFixed(2)}</li>
-            <li><strong>Driver Share of Gross Earnings:</strong> ${(driverCutRatio * 100).toFixed(2)}%</li>
-            <li><strong>Lyft + Partner Share of Gross Earnings:</strong> ${(lyftCutRatio * 100).toFixed(2)}%</li>
-            <li><strong>Driver Earnings per $1 Lyft Earned:</strong> $${revenueToEarningsRatio.toFixed(2)}</li>
-            <li><strong>Tolls as % of Gross Earnings:</strong> ${(tollShare * 100).toFixed(2)}%</li>
-          </ul>
+    function parseInput(id){
+      const val = parseFloat(document.getElementById(id).value);
+      return isNaN(val)?0:val;
+    }
+    function getProfitComparison(n){
+      if(n>0)return"You are making a profit after expenses.";
+      if(n<0)return"You are operating at a loss after expenses.";
+      return"You are breaking even after expenses.";
+    }
+    function parseDriverText(){
+      let raw=document.getElementById('driverData').value.split("\n");
+      let data={rides:0,miles:0,gross:0,nonride:0,platform:0,service:0,third:0,tolls:0};
+      let milesA=0;let milesB=0;
+      for(let i=0;i<raw.length;i++){
+        let line=raw[i].toLowerCase().trim();
+        if(line.includes("rides ")){
+          let match=line.match(/rides\s+(\d+)/);
+          if(match) data.rides=parseFloat(match[1]);
+        }else if(line.includes("jan-jun| jul-dec")){
+          // next line might have the miles
+          if(raw[i+1]){
+            let next=raw[i+1].trim();
+            let parts=next.split("|");
+            if(parts.length===2){
+              milesA=parseFloat(parts[0])||0;
+              milesB=parseFloat(parts[1])||0;
+            }
+          }
+        }else if(line.includes("ride payments")){
+          let match=line.match(/\$(\S+)/);
+          if(!match){
+            // maybe next line
+            if(raw[i+1]){
+              let second=raw[i+1].match(/\$(\S+)/);
+              if(second) data.gross=parseFloat(second[1]);
+            }
+          }else{
+            data.gross=parseFloat(match[1]);
+          }
+        }else if(line.includes("non-ride earnings")){
+          let match=line.match(/\$(\S+)/);
+          if(match) data.nonride=parseFloat(match[1]);
+        }else if(line.includes("platform fees")){
+          let match=line.match(/\$(\S+)/);
+          if(match) data.platform=parseFloat(match[1]);
+        }else if(line.includes("service fees")){
+          let match=line.match(/\$(\S+)/);
+          if(match) data.service=parseFloat(match[1]);
+        }else if(line.includes("third-party fees")){
+          let match=line.match(/\$(\S+)/);
+          if(match) data.third=parseFloat(match[1]);
+        }else if(line.includes("tolls (paid to the driver)")){
+          let match=line.match(/\$(\S+)/);
+          if(match) data.tolls=parseFloat(match[1]);
+        }
+      }
+      data.miles=milesA+milesB;
+      document.getElementById('totalRides').value=data.rides||0;
+      document.getElementById('milesDriven').value=data.miles.toFixed(2);
+      document.getElementById('grossEarnings').value=data.gross||0;
+      document.getElementById('nonRideEarnings').value=data.nonride||0;
+      document.getElementById('platformFees').value=data.platform||0;
+      document.getElementById('serviceFees').value=data.service||0;
+      document.getElementById('thirdPartyFees').value=data.third||0;
+      document.getElementById('tolls').value=data.tolls||0;
+    }
+    function calculateEarnings() {
+      const totalRides=parseInput('totalRides');
+      const milesDriven=parseInput('milesDriven');
+      const grossEarnings=parseInput('grossEarnings');
+      const nonRideEarnings=parseInput('nonRideEarnings');
+      const platformFees=parseInput('platformFees');
+      const serviceFees=parseInput('serviceFees');
+      const thirdPartyFees=parseInput('thirdPartyFees');
+      const tolls=parseInput('tolls');
+      const irsMileageRate=0.67;
+      const totalFees=platformFees+serviceFees+thirdPartyFees;
+      const netEarnings=grossEarnings+nonRideEarnings -totalFees+tolls;
+      const earningsPerRide=totalRides>0?netEarnings/totalRides:0;
+      const earningsPerMile=milesDriven>0?netEarnings/milesDriven:0;
+      const drivingExpenses=milesDriven*irsMileageRate;
+      const netProfit=netEarnings-drivingExpenses;
+      const lyftGrossBookings=16099400;
+      const lyftRevenue=5786016;
+      const lyftNetIncome=22784;
+      const lyftTotalRides=828300000;
+      const lyftTakeRate=(lyftRevenue/lyftGrossBookings)*100;
+      const lyftProfitPerRide=lyftNetIncome/lyftTotalRides;
+      const profitComparison=getProfitComparison(netProfit);
+      document.getElementById('results').innerHTML=`
+        <div class='card'>
+          <h3 class='text-lg font-semibold mb-2'>Results</h3>
+          <p><strong>Your Earnings per Ride:</strong> $${earningsPerRide.toFixed(2)}</p>
+          <p><strong>Your Earnings per Mile:</strong> $${earningsPerMile.toFixed(2)}</p>
+          <p><strong>Your Total Driving Expenses:</strong> $${drivingExpenses.toFixed(2)}</p>
+          <p><strong>Your Net Profit/Loss After Expenses:</strong> $${netProfit.toFixed(2)}</p>
+          <p class='text-sm mt-2'><strong>Financial Viability:</strong> ${profitComparison}</p>
         </div>
+        <div class='card'>
+          <h3 class='text-lg font-semibold mb-2'>Comparison with Lyft Financials</h3>
+          <p><strong>Lyft's Company-Wide Take Rate:</strong> ${lyftTakeRate.toFixed(1)}%</p>
+          <p><strong>Lyft's Net Profit Per Ride:</strong> $${lyftProfitPerRide.toFixed(6)}</p>
+        </div>
+        <div class='card'>
+          <h3 class='text-lg font-semibold mb-2'>Summary of Lyft’s Financial Data</h3>
+          <p>Lyft reported a revenue of $5,786,016 in 2024, with gross bookings totaling $16,099,400. Their total ride volume was 828.3 million rides, and their take rate (the percentage of fares they keep) was 35.9%. Their net profit per ride was ~$0.0000275.</p>
+        </div>
+        <div class='card mb-6'>
+          <h3 class='text-lg font-semibold mb-2'>Summary of Your Financial Data</h3>
+          <p>Based on your input, your take rate by Lyft is $${grossEarnings>0?((totalFees/grossEarnings)*100).toFixed(1):0}%. Your earnings per mile ($${earningsPerMile.toFixed(2)}) are compared to $0.67/mile, which may indicate profit or loss.</p>
       `;
     }
   </script>
+</head>
+<body class="bg-gradient-to-br from-emerald-50 to-sky-50 min-h-screen flex flex-col items-center p-4">
+  <div class="max-w-xl w-full">
+    <h1 class="text-2xl font-bold text-center mb-6">Lyft Driver Earnings Calculator</h1>
+    <div class="card">
+      <p class="mb-4">Paste your driver data below, then click "Auto-Fill" to populate fields. Finally, hit "Calculate" to see your results.</p>
+      <textarea id="driverData" class="border rounded p-2 w-full mb-2" rows="6" placeholder="Paste your data here..."></textarea>
+      <button onclick="parseDriverText()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mr-2">Auto-Fill</button>
+      <button onclick="calculateEarnings()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Calculate</button>
+    </div>
+    <div class="card">
+      <h2 class="text-xl font-semibold mb-2">Driver Data Overrides</h2>
+      <div class="mb-2">
+        <label class="block mb-1" for="totalRides">Total Rides</label>
+        <input type="number" id="totalRides" class="border rounded p-1 w-full" placeholder="e.g. 364"/>
+      </div>
+      <div class="mb-2">
+        <label class="block mb-1" for="milesDriven">Miles Driven</label>
+        <input type="number" id="milesDriven" class="border rounded p-1 w-full" placeholder="e.g. 9308.51"/>
+      </div>
+      <div class="mb-2">
+        <label class="block mb-1" for="grossEarnings">Gross Earnings ($)</label>
+        <input type="number" id="grossEarnings" class="border rounded p-1 w-full" placeholder="e.g. 9813.80"/>
+      </div>
+      <div class="mb-2">
+        <label class="block mb-1" for="nonRideEarnings">Non-Ride Earnings ($)</label>
+        <input type="number" id="nonRideEarnings" class="border rounded p-1 w-full" placeholder="e.g. 444.87"/>
+      </div>
+      <div class="mb-2">
+        <label class="block mb-1" for="platformFees">Lyft Platform Fees ($)</label>
+        <input type="number" id="platformFees" class="border rounded p-1 w-full" placeholder="e.g. 2668.31"/>
+      </div>
+      <div class="mb-2">
+        <label class="block mb-1" for="serviceFees">Service Fees ($)</label>
+        <input type="number" id="serviceFees" class="border rounded p-1 w-full" placeholder="e.g. 1288.57"/>
+      </div>
+      <div class="mb-2">
+        <label class="block mb-1" for="thirdPartyFees">Third-Party Fees ($)</label>
+        <input type="number" id="thirdPartyFees" class="border rounded p-1 w-full" placeholder="e.g. 152.00"/>
+      </div>
+      <div class="mb-2">
+        <label class="block mb-1" for="tolls">Tolls Paid to Driver ($)</label>
+        <input type="number" id="tolls" class="border rounded p-1 w-full" placeholder="e.g. 389.17"/>
+      </div>
+      <button onclick="calculateEarnings()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Calculate</button>
+    </div>
+    <div id="results" class="w-full"></div>
+  </div>
 </body>
 </html>
